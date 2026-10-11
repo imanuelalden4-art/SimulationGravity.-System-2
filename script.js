@@ -42,12 +42,11 @@ let orbitPromptActive = false;
 
 // Chart
 let energyChart = null;
-// Global delete handler (mencegah listener accumulation)
 window.deleteCurrentObject = function (id) {
   deleteObject(id);
 };
 
-// Three.js Setup
+
 const container = document.getElementById("canvas-container");
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x080b14);
@@ -395,7 +394,7 @@ function setupOrbit(child, parent, radius) {
   child.orbitRadius = radius;
   child.orbitAngle = Math.random() * Math.PI * 2;
 
-  // TAMBAHAN: Inklinasi acak (-45° hingga 45°) agar orbit tidak selalu datar di bidang X-Z
+ 
   child.orbitInclination = (Math.random() - 0.5) * (Math.PI / 4);
 
   const M = logScaleMass(parent.mass);
@@ -562,20 +561,19 @@ function updateOrbits() {
 
       obj.orbitAngle += obj.orbitSpeed * timeScale;
 
-      // PERBAIKAN: Hitung posisi orbit 3D menggunakan inklinasi
+    
       const inc = obj.orbitInclination || 0;
       const cosA = Math.cos(obj.orbitAngle);
       const sinA = Math.sin(obj.orbitAngle);
       const cosI = Math.cos(inc);
       const sinI = Math.sin(inc);
 
-      // Rotasi sederhana pada sumbu X untuk menciptakan kemiringan orbit
       const localX = obj.orbitRadius * cosA;
       const localY = 0;
       const localZ = obj.orbitRadius * sinA;
 
       obj.x = obj.orbitParent.x + localX;
-      obj.y = (obj.orbitParent.y || 0) + localY; // Tidak lagi dipaksa sama dengan parent.y
+      obj.y = (obj.orbitParent.y || 0) + localY;
       obj.z = (obj.orbitParent.z || 0) + localZ;
 
       if (showOrbitTrail && frameCounter % TRAIL_UPDATE_INTERVAL === 0) {
@@ -660,7 +658,7 @@ function startOrbit(child, parent) {
   child.orbitParent = parent;
   child.orbitRadius = Math.max(dist, 10);
   child.orbitAngle = Math.atan2(dz, dx);
-  // PERBAIKAN: Tambahkan inklinasi acak untuk orbit manual
+  
   child.orbitInclination = (Math.random() - 0.5) * (Math.PI / 4);
   const M = logScaleMass(parent.mass);
   child.orbitSpeed = Math.sqrt((SIM_G * M) / child.orbitRadius ** 3);
@@ -788,17 +786,15 @@ function showObjectAnalysis(obj) {
     obj.prevPos = new THREE.Vector3(obj.x, obj.y || 0, obj.z);
   }
 
-  // 1. Buat elemen HTML & pasang listener tombol SEKALI SAJA
+
   renderObjectAnalysisHTML(obj);
 
-  // 2. Inisialisasi Chart.js setelah canvas dibuat
   initEnergyChart(obj);
 
-  // 3. Perbarui nilainya
+
   updateObjectAnalysisDisplay(obj);
 }
 
-// Fungsi untuk merender UI HTML secara statis
 function renderObjectAnalysisHTML(obj) {
   const detailsDiv = document.getElementById("explore-details");
   detailsDiv.innerHTML = `
@@ -831,13 +827,11 @@ function renderObjectAnalysisHTML(obj) {
     </div>
   `;
 
-  // Pasang Event Listener langsung pada tombol yang stabil
   document.getElementById("btn-detail-delete").addEventListener("click", () => {
     deleteObject(obj.id);
   });
 }
 
-// Fungsi ini HANYA memperbarui data teks di tiap frame (ringan & stabil)
 function updateObjectAnalysisDisplay(obj) {
   const elPos = document.getElementById("val-pos");
   if (!elPos) return;
@@ -937,7 +931,7 @@ function updateObjectAnalysisDisplay(obj) {
     updateEnergyChart(obj);
   }
 
-  // Update isi teks saja tanpa merender ulang HTML
+ 
   document.getElementById("val-pos").textContent =
     `(${obj.x.toFixed(1)}, ${(obj.y || 0).toFixed(1)}, ${(obj.z || 0).toFixed(1)})`;
   const badge = document.getElementById("val-orbit-badge");
@@ -955,7 +949,7 @@ function updateObjectAnalysisDisplay(obj) {
   errBadge.className = `energy-error-badge ${errorClass}`;
 }
 
-// Fungsi hapus objek yang aman
+
 function deleteObject(id) {
   const idx = objects.findIndex((o) => o.id === id);
   if (idx === -1) return;
@@ -1088,7 +1082,6 @@ function moveDrag(event) {
   draggedObject.z = Math.max(-hs, Math.min(hs, dragIntersection.z));
   draggedObject.mesh.position.x = draggedObject.x;
   draggedObject.mesh.position.z = draggedObject.z;
-  // PERBAIKAN: Update posisi Y mesh agar pas di atas grid saat drag
   draggedObject.mesh.position.y =
     (draggedObject.y || 0) + getVisualRadius(draggedObject.mass) + 1;
 }
@@ -1107,7 +1100,7 @@ function endDrag(event) {
     }
   }
   if (isDragging) {
-    // Update posisi Y mesh agar pas di atas grid (meski paused)
+   
     if (draggedObject) {
       const vr = getVisualRadius(draggedObject.mass);
       draggedObject.mesh.position.y = (draggedObject.y || 0) + vr + 1;
@@ -1117,7 +1110,7 @@ function endDrag(event) {
     dragStartPos = null;
     controls.enabled = true;
     calculateDeformation();
-    updateGrid(); // Force update visual grid meski paused
+    updateGrid();
   }
 }
 
@@ -1834,7 +1827,7 @@ function drawGrid3D(ctx, time) {
 
   ctx.lineWidth = 1;
 
-  // Gambar grid horizontal dengan opacity lebih rendah
+
   for (let iz = -gridSize / 2; iz <= gridSize / 2; iz++) {
     ctx.beginPath();
     let first = true;
@@ -1848,7 +1841,6 @@ function drawGrid3D(ctx, time) {
       const distFromCenter = Math.sqrt(rx * rx + rz * rz);
       let y = 0;
 
-      // Grid melengkung ke BAWAH (positif = ke bawah)
       if (distFromCenter < bhRadius * 3) {
         const factor = Math.max(0, 1 - distFromCenter / (bhRadius * 3));
         y = bhDepth * factor * factor;
@@ -1858,9 +1850,8 @@ function drawGrid3D(ctx, time) {
       const px = cx + rx * scale;
       const py = cy + y * scale - rz * 0.4;
 
-      // Warna lebih soft dengan gradasi berdasarkan kedalaman
       const depth = y / bhDepth;
-      const alpha = 0.15 + depth * 0.25; // Opacity lebih rendah (0.15 - 0.4)
+      const alpha = 0.15 + depth * 0.25; 
       const hue = 180 + depth * 120;
 
       ctx.strokeStyle = `hsla(${hue}, 70%, 60%, ${alpha})`;
@@ -1875,7 +1866,7 @@ function drawGrid3D(ctx, time) {
     ctx.stroke();
   }
 
-  // Gambar grid vertikal dengan opacity lebih rendah
+
   for (let ix = -gridSize / 2; ix <= gridSize / 2; ix++) {
     ctx.beginPath();
     let first = true;
